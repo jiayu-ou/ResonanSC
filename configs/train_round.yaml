@@ -1,0 +1,74 @@
+input:
+  init_checkpoint: "./outputs/result3/init.pt"
+  init_adata: "./data/processed/result3/init_adata.h5ad"
+  training_data_dir: "./data/processed/result3/training_multidata"
+  atac_da_dir: "./data/processed/result3/atacdata_da"
+
+keys:
+  batch_key: "batch"
+  type_key: "cell_type"
+
+runtime:
+  cuda_visible_devices: "2,3,5,6"
+  multi_gpu: true
+  devices: null
+  seed: 42
+
+output:
+  output_dir: "./outputs/result3"
+  round: 1
+  prefix: "train"
+  figures_dir: "figures"
+  annotated_h5ad: "training_round_{round}_annotated.h5ad"
+  merge_checkpoint: "merge_round_{round}.pt"
+  summary_json: "training_round_{round}_summary.json"
+
+plots:
+  save: true
+  dpi: 300
+  umap_color: ["batch", "cell_type", "pred_learn_P"]
+  m_umap_color: ["batch", "cell_type", "pred"]
+  mscore_ncols: 5
+
+training:
+  stages: ["learn_P", "learn_mapping", "learn_M"]
+  resume:
+    learn_P: null
+    learn_mapping: "learn_P"
+    learn_M: "learn_mapping"
+  common:
+    one_hot_start: false
+    present_eps: 0.1
+    rna_chunk_size: 512
+    cellbulk_chunk_size: 512
+    cache_rna_on_device: false
+    marker_init_mode: "continuous"
+    marker_init_eps: 0.05
+    verbose_every: 10
+  margin:
+    learn_M: [0.3, 1.5, 3.0]
+    learn_mapping: [0.3, 1.5, 3.0]
+    learn_P: [0.5, 2.0, 10.0]
+  learn_P:
+    epochs: 100
+    lr: 0.01
+    lambdas: [10.0, 10.0, 1.0]
+  learn_mapping:
+    epochs: 200
+    lr: 0.01
+    lambdas: [1.0, 1.0, 0.0]
+    mapping_lambdas: [1.0, 1.0]
+  learn_M:
+    epochs: 30
+    lr: 0.01
+    lambdas: [1.0, 1.0, 0.0]
+    marker_sparsity: 1.0
+
+merge_align:
+  enabled: false
+  inbatch_threshold: 0.85
+  cap: 3
+  null_score: 0.3
+  device: "cpu"
+  eps: 1.0e-8
+  normalize_M: true

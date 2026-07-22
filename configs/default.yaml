@@ -1,0 +1,92 @@
+input:
+  adata_path: "./data/raw/data.h5ad"
+
+keys:
+  batch_key: "batch"
+  subtype_key: "subtype"
+
+runtime:
+  device: "auto"
+  seed: 42
+
+preprocess:
+  n_top_genes: 2000
+  n_pcs: 20
+  n_neighbors: 15
+  leiden_resolution: 1
+  leiden_key: "leiden"
+
+plot:
+  figsize_per_panel: [9, 9]
+  cmap: "coolwarm"
+  annot: true
+  fmt: ".2f"
+  ncols: 2
+
+stage1_init_corr:
+  mode: "de"
+  min_genes: 5
+
+stage1_inbatch_merge:
+  threshold: 0.60
+  device: "cpu"
+
+stage1_cross_corr:
+  mode: "de"
+  min_genes: 5
+
+stage1_cross_align:
+  cap: 3
+  null_score: -0.5
+  device: "cpu"
+
+training:
+  one_hot_start: false
+  present_eps: 0.1
+  margin:
+    learn_M: [0.3, 1.5, 3.0]
+    learn_P: [0.5, 2.0, 10.0]
+
+  learn_P:
+    epochs: 300
+    lr: 0.01
+    lambdas: [1.0, 1.0, 0.0]
+
+  learn_M:
+    epochs: 300
+    lr: 0.01
+    lambdas: [5.0, 10.0, 1.0]
+
+stage2_weighted_corr:
+  mode: "weighted"
+  diag_use_mean: true
+
+stage2_inbatch_merge:
+  threshold: 0.80
+  device: "cpu"
+
+stage2_cross_corr:
+  mode: "weighted"
+  diag_use_mean: true
+
+stage2_cross_align:
+  cap: 3
+  null_score: -0.5
+  device: "cpu"
+
+final:
+  eps: 1.0e-8
+  normalize: true
+
+output:
+  output_dir: "./outputs/default_run"
+  model_1P_filename: "trainout_1P.pt"
+  model_2M_filename: "trainout_2M.pt"
+  final_label_key: "ResonanSC"
+  adata_filename: "output.h5ad"
+  marker_filename: "ResonanSC_markers.csv"
+  marker_col_prefix: "type"
+  umap_filename: "umap.png"
+  umap_filename_1: "umap_1.png"
+  umap_filename_2: "umap_2.png"
+  umap_color: ["batch", "subtype", "ResonanSC"]
