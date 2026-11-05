@@ -4,6 +4,7 @@ from pathlib import Path
 
 import anndata as ad
 import numpy as np
+import pandas as pd
 import yaml
 from scipy import sparse
 from sklearn.decomposition import PCA, TruncatedSVD
@@ -33,6 +34,9 @@ def main():
         "input": {
             "expression_h5ad": str(data_dir / "expression.h5ad"),
             "peak_h5ad": str(data_dir / "peak_counts.h5ad"),
+            "gtf": str(data_dir / "genes.gtf.gz"),
+            "peak_genome_build": "GRCh38",
+            "gtf_genome_build": "GRCh38",
             "batch_key": "batch",
             "batches": ["rna_1", "atac_1"],
         },
@@ -56,9 +60,25 @@ def main():
         atac_lsi=atac_lsi,
         atac_cell_names=atac.obs_names.tolist(),
     )
-    labels = __import__("pandas").read_csv(run_dir / "cell_labels.csv")
+    labels = pd.read_csv(run_dir / "cell_labels.csv")
     assert len(labels) == expression.n_obs and labels.cell_barcode.is_unique
-    print(f"PASS: {len(labels)} PBMC cells aligned; results in {run_dir}")
+    checkpoint = rs.prepare_from_alignment(config_path, alignment_dir=run_dir)
+    assert checkpoint.is_file()
+    training = yaml.safe_load((Path(__file__).resolve().parent / "optimization_WM20.yaml").read_text())
+    training["input"] = {
+        "init_checkpoint": str(checkpoint),
+        "training_data_dir": str(run_dir / "prepared" / "training_multidata"),
+        "init_adata": str(run_dir / "prepared" / "aligned_gene_activity.h5ad"),
+    }
+    training["output"]["output_dir"] = str(output / "optimization")
+    training["runtime"]["cuda_visible_devices"] = ""
+    training["training"]["learn_mapping"]["epochs"] = 1
+    training["training"]["learn_M"]["epochs"] = 1
+    training_path = output / "optimization.yaml"
+    training_path.write_text(yaml.safe_dump(training, sort_keys=False))
+    rs.optimize(training_path)
+    assert (output / "optimization" / "train_M_1.pt").is_file()
+    print(f"PASS: {len(labels)} PBMC cells aligned, initialized, and optimized (W/M one epoch); results in {output}")
 
 
 if __name__ == "__main__":

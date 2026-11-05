@@ -1,6 +1,8 @@
 """Recreate the small paired PBMC example from prepared 10x Multiome inputs."""
 import argparse
+import gzip
 from pathlib import Path
+import re
 
 import anndata as ad
 import numpy as np
@@ -11,6 +13,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("source", type=Path, help="directory containing expression.h5ad and peak_counts.h5ad")
     parser.add_argument("--output", type=Path, default=Path(__file__).resolve().parent)
+    parser.add_argument("--gtf", type=Path, help="matching GRCh38 GTF, optionally gzipped")
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     expression = ad.read_h5ad(args.source / "expression.h5ad", backed="r")
@@ -44,6 +47,23 @@ def main():
         peak_small = peak_part[:, peak_idx].copy()
         peak_small.obs = peak_small.obs[["batch", "raw_barcode"]].copy()
         peak_small.write_h5ad(args.output / "peak_counts.h5ad", compression="gzip")
+        if args.gtf:
+            wanted = set(combined.var_names.astype(str))
+            names = set()
+            opener = gzip.open if str(args.gtf).endswith(".gz") else open
+            pattern = re.compile(r'gene_name "([^"]+)"')
+            with opener(args.gtf, "rt") as source, gzip.open(args.output / "genes.gtf.gz", "wt") as target:
+                for line in source:
+                    fields = line.split("\t", 3)
+                    if len(fields) < 4 or fields[2] != "gene":
+                        continue
+                    match = pattern.search(line)
+                    if match and match.group(1) in wanted:
+                        target.write(line)
+                        names.add(match.group(1))
+            if len(names) < 0.90 * len(wanted):
+                raise ValueError(f"GTF matched only {len(names)}/{len(wanted)} genes")
+            print(f"Wrote GRCh38 GTF records for {len(names)} genes")
         print(f"Wrote {combined.shape} expression and {peak_small.shape} peak matrices")
     finally:
         expression.file.close()

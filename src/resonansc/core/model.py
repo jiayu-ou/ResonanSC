@@ -640,7 +640,7 @@ class LowDimClustering(nn.Module):
         if gene_w is None:
             dist = (diff**2).mean(dim=1)  # (cell,)
         else:
-            # 加权 MSE：sum_g w_g * diff^2
+            # Weighted MSE: sum_g w_g * diff^2.
             dist = (diff**2 * gene_w.unsqueeze(0)).sum(dim=1)  # (cell,)
 
         if prob is not None:

@@ -317,7 +317,7 @@ def get_subtype_onehot(rnadata, subtype_key='subtype'):
             if subtype not in onehot_df.columns:
                 onehot_df[subtype] = 0.0
 
-        onehot_df = onehot_df[all_subtypes]  # 按统一顺序排列
+        onehot_df = onehot_df[all_subtypes]  # Use the same subtype order.
         onehot_list.append(onehot_df.values)  # shape: (n_cells, n_subtypes)
 
     return onehot_list, all_subtypes

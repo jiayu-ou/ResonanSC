@@ -13,7 +13,10 @@ the 2,000 peaks detected in the most sampled ATAC cells. The small expression
 matrix contains 400 RNA and 400 ATAC rows in the same 500-gene space. The
 peak matrix contains the 400 ATAC rows and raw integer counts. Only `batch`
 and `raw_barcode` cell metadata are included; no cell-type labels are used.
+`genes.gtf.gz` contains matching gene records from GENCODE v43 on GRCh38.
+The subset generator recreates it with `--gtf` and the full annotation.
 
 Run `python examples/run_pbmc_minimal.py` from the repository root to use
 these files. The script computes RNA PCA and ATAC peak LSI from this subset,
-runs batch-mode alignment on CPU, and checks the 800 output cell barcodes.
+runs batch-mode alignment on CPU, checks the 800 output cell barcodes,
+initializes P/W/M, and optimizes W and M for one epoch each.
