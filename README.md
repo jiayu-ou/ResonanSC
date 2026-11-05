@@ -48,8 +48,6 @@ The workflow consists of four stages. The first and third stages are exercised b
 3. **`P/W/M` initialization and optimization.** Convert aligned labels to initial cell-assignment logits `P`. Build a peak-to-gene mapping prior `W` from a matching genome annotation and initialize marker logits `M` from one-versus-rest marker information. The optimizer can update `P`, `W`, and `M` in configured stages. The supplied `optimization_WM20.yaml` template holds `P` fixed and updates `W` and `M` for 20 epochs each. The minimal test reduces those two stages to one epoch each.
 4. **Optional W-LSI embedding.** Map ATAC signals into gene space using a trusted optimized `W`, calculate pooled LSI, and train RNA and ATAC encoders with parent-label supervision and an MMD objective. This stage requires a compatible NVIDIA GPU and `scvi-tools==1.3.3`. It is not part of the CPU minimal test.
 
-The alignment makes no cell-type ground-truth assignment. Match scores, cluster resolution, feature space, and thresholds require review for each dataset. In the condition-mode all-donor Hungarian stage, a match can be made even at low similarity; inspect the saved audit tables.
-
 ## Installation
 
 ```bash
