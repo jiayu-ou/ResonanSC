@@ -1,0 +1,128 @@
+input:
+  expression_h5ad: data/expression.h5ad
+  peak_h5ad: data/peaks.h5ad
+  gtf: null
+  peak_genome_build: null
+  gtf_genome_build: null
+  batch_key: batch
+  batches: null
+output_dir: output/hierarchy
+runtime:
+  seed: 42
+  gpu: '0'
+  neighbors_backend: cpu
+  gpu_python: null
+  multi_gpu: false
+  devices: null
+alignment:
+  n_top_genes: 2000
+  n_pcs: 30
+  n_lsi: 30
+  n_neighbors: 15
+  leiden_resolution: 0.8
+  min_peak_cells: 20
+  condition_key: condition
+  condition_groups:
+    patient:
+      rna:
+      - patient
+      atac:
+      - patient
+    convalescent:
+      rna:
+      - convalescent
+      atac:
+      - convalescent
+  rna_first_threshold: 0.8
+  atac_first_threshold: 0.6
+  min_within: 0.7
+  min_cross: 0.3
+  max_top_gap: 0.1
+  max_profile_rmse: 0.24
+  atac_min_within: 0.5
+  atac_min_cross: 0.05
+  atac_max_top_gap: 0.3
+  atac_max_profile_rmse: 0.24
+  cross_min_within: 0.7
+  cross_min_cross: 0.12
+  cross_max_top_gap: 0.02
+  cross_max_profile_rmse: 0.017
+  max_merge_rounds: 4
+  defer_within_merge_across_batches: false
+  deferred_min_match_margin: 0.03
+  rna_align_cap: 1
+  atac_align_cap: 1
+  condition_align_min_score: 0.95
+  condition_align_mutual_best: true
+  condition_align_reciprocal_top_k: 2
+  rna_leiden_resolution: 0.9
+  atac_leiden_resolution: 1.0
+  cross_condition_atac_min_corr: 0.5
+preparation:
+  min_peak_cells: 20
+  max_distance: 250000
+  distance_scale: 50000
+  marker_top_n: 100
+  marker_min_cells: 10
+plotting:
+  rna_cell_type_key: null
+  atac_cell_type_key: null
+  condition_key: null
+training:
+  stages:
+  - learn_mapping
+  - learn_M
+  resume:
+    learn_P: null
+    learn_mapping: null
+    learn_M: learn_mapping
+  common:
+    one_hot_start: false
+    present_eps: 0.1
+    rna_chunk_size: 512
+    cellbulk_chunk_size: 512
+    cache_rna_on_device: false
+    marker_init_mode: continuous
+    marker_init_eps: 0.05
+    verbose_every: 10
+  margin:
+    learn_P:
+    - 0.5
+    - 2.0
+    - 10.0
+    learn_mapping:
+    - 0.3
+    - 1.5
+    - 3.0
+    learn_M:
+    - 0.3
+    - 1.5
+    - 3.0
+  learn_P:
+    epochs: 100
+    lr: 0.01
+    lambdas:
+    - 10.0
+    - 10.0
+    - 1.0
+  learn_mapping:
+    epochs: 20
+    lr: 0.01
+    lambdas:
+    - 1.0
+    - 1.0
+    - 0.0
+    mapping_lambdas:
+    - 1.0
+    - 1.0
+  learn_M:
+    epochs: 20
+    lr: 0.01
+    lambdas:
+    - 1.0
+    - 1.0
+    - 0.0
+    marker_sparsity: 1.0
+plot:
+  rna-cell-type-key: atac_celltype
+  atac-cell-type-key: celltype

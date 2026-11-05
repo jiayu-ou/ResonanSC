@@ -1,0 +1,2 @@
+include README.md PROVENANCE.md SOURCE_SHA256SUMS.txt
+recursive-include examples *.yaml
